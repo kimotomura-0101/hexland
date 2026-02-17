@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: d533b7e85986e384088d452086ac2e5b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - housePrefab: {fileID: 919132149155446097, guid: 67ff21a455dd6294c8763cadcf285575, type: 3}
+  - cityPrefab: {fileID: 3678996007321260529, guid: 52ea912644dbbd34cac1376b64ab1c1d, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

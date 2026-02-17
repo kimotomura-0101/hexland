@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a8d28fba355c2034986c73c420307b06
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - hexPrefab: {instanceID: 0}
+  - vertexPrefab: {instanceID: 0}
+  - centerReference: {instanceID: 0}
+  - parentObject: {instanceID: 0}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
