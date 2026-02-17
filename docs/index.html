@@ -3,11 +3,22 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | Katan3D</title>
+    <title>Hexland - 3D Board Game</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    <style>
+      body { margin: 0; background: #1a1a2e; }
+      #page-wrapper { display: flex; justify-content: center; align-items: flex-start; gap: 16px; padding: 16px; min-height: 100vh; }
+      #unity-container { flex-shrink: 0; }
+      .ad-slot { width: 160px; min-height: 600px; background: #16213e; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; color: #555; font-family: sans-serif; font-size: 12px; }
+      @media (max-width: 1300px) { .ad-slot { display: none; } }
+    </style>
+    <!-- AdSense: 審査通過後にここにスクリプトを追加 -->
+    <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"></script> -->
   </head>
   <body>
+    <div id="page-wrapper">
+    <div class="ad-slot" id="ad-left"><!-- 広告枠 (左) --></div>
     <div id="unity-container" class="unity-desktop">
       <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
       <div id="unity-loading-bar">
@@ -129,5 +140,7 @@
       document.body.appendChild(script);
 
     </script>
+    <div class="ad-slot" id="ad-right"><!-- 広告枠 (右) --></div>
+    </div>
   </body>
 </html>
