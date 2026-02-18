@@ -70,22 +70,39 @@ public class VertexPoint : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
         if (GameManager.Instance.isExploreMode) return;
+        if (!GameManager.Instance.IsLocalPlayerTurn()) return;
 
         // 建設モードでなければ何もしない（初期配置フェーズは除く）
         if (!GameManager.Instance.IsSetupPhase && !GameManager.Instance.isConstructionMode) return;
 
-        // クリックしたら家を建てる（簡易版）
         string currentPlayer = GameManager.Instance.CurrentPlayer;
+
+        // マルチプレイ: サーバーに送信して確認を待つ
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
+        {
+            string key = NetworkBridge.MakeVertexKey(transform.position);
+            if (!hasBuilding && CanBuildSettlement(currentPlayer))
+            {
+                NetworkManager.Instance.SendGameAction("build_settlement",
+                    new System.Collections.Generic.Dictionary<string, object> { { "vertexKey", key } });
+            }
+            else if (hasBuilding && !isCity && ownerPlayer == currentPlayer && !GameManager.Instance.IsSetupPhase)
+            {
+                NetworkManager.Instance.SendGameAction("upgrade_city",
+                    new System.Collections.Generic.Dictionary<string, object> { { "vertexKey", key } });
+            }
+            return;
+        }
+
+        // シングルプレイ: 従来通り
         if (!hasBuilding)
         {
             if (CanBuildSettlement(currentPlayer))
             {
-                // 初期配置フェーズはコストなし
                 if (GameManager.Instance.IsSetupPhase)
                 {
                     BuildSettlement(currentPlayer);
                 }
-                // 通常フェーズはコスト消費 (木1, 土1, 麦1, 羊1)
                 else if (GameManager.Instance.TryConsumeResources(currentPlayer, 1, 1, 0, 1, 1))
                 {
                     BuildSettlement(currentPlayer);
@@ -102,12 +119,10 @@ public class VertexPoint : MonoBehaviour
         }
         else if (!isCity && ownerPlayer == currentPlayer)
         {
-            // 都市へのアップグレード
             if (GameManager.Instance.IsSetupPhase)
             {
                 Debug.Log("初期配置フェーズでは都市化できません");
             }
-            // コスト消費 (鉄3, 麦2)
             else if (GameManager.Instance.TryConsumeResources(currentPlayer, 0, 0, 3, 2, 0))
             {
                 UpgradeToCity(currentPlayer);

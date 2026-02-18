@@ -51,40 +51,41 @@ public class EdgePoint : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
         if (GameManager.Instance.isExploreMode) return;
+        if (!GameManager.Instance.IsLocalPlayerTurn()) return;
 
         // 建設モードでなければ何もしない（初期配置フェーズは除く）
         if (!GameManager.Instance.IsSetupPhase && !GameManager.Instance.isConstructionMode) return;
 
-        // クリックしたら道を建設（簡易版）
         if (!hasRoad)
         {
             string currentPlayer = GameManager.Instance.CurrentPlayer;
-            // カタンのルール: 自分の家か、自分の道につながっている必要がある
-            if (CanBuildRoad(currentPlayer))
+            if (!CanBuildRoad(currentPlayer)) { Debug.Log("道を建設できません。"); return; }
+
+            // マルチプレイ: サーバーに送信
+            if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
             {
-                // 初期配置フェーズはコストなし
-                if (GameManager.Instance.IsSetupPhase)
-                {
-                    BuildRoad(currentPlayer);
-                }
-                // 街道建設カード使用中もコストなし
-                else if (GameManager.Instance.currentStep == GameManager.TurnStep.RoadBuildingCard)
-                {
-                    BuildRoad(currentPlayer);
-                }
-                // 通常フェーズはコスト消費 (木1, 土1)
-                else if (GameManager.Instance.TryConsumeResources(currentPlayer, 1, 1, 0, 0, 0))
-                {
-                    BuildRoad(currentPlayer);
-                }
-                else
-                {
-                    Debug.Log("資源が足りません（必要: 木1, 土1）");
-                }
+                string key = NetworkBridge.MakeEdgeKey(vertex1.transform.position, vertex2.transform.position);
+                NetworkManager.Instance.SendGameAction("build_road",
+                    new System.Collections.Generic.Dictionary<string, object> { { "edgeKey", key } });
+                return;
+            }
+
+            // シングルプレイ: 従来通り
+            if (GameManager.Instance.IsSetupPhase)
+            {
+                BuildRoad(currentPlayer);
+            }
+            else if (GameManager.Instance.currentStep == GameManager.TurnStep.RoadBuildingCard)
+            {
+                BuildRoad(currentPlayer);
+            }
+            else if (GameManager.Instance.TryConsumeResources(currentPlayer, 1, 1, 0, 0, 0))
+            {
+                BuildRoad(currentPlayer);
             }
             else
             {
-                Debug.Log("道を建設できません。自分の家か道につなげてください。");
+                Debug.Log("資源が足りません（必要: 木1, 土1）");
             }
         }
     }

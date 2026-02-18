@@ -10,6 +10,9 @@ public class MenuController : MonoBehaviour
     public GameObject settingsPanel;    // 設定画面
     public GameObject gameHUDPanel;     // ゲーム中のUI（建設ボタンなど）
 
+    [Header("Multiplayer")]
+    public LobbyUI lobbyUI;            // マルチプレイロビー画面
+
     [Header("Background")]
     public MenuBackgroundGenerator backgroundGenerator;
 
@@ -112,6 +115,14 @@ public class MenuController : MonoBehaviour
     public void OnBackToTitle()
     {
         ShowTitle();
+    }
+
+    // マルチプレイボタン
+    public void OnMultiplayerButton()
+    {
+        titlePanel.SetActive(false);
+        settingsPanel.SetActive(false);
+        if (lobbyUI != null) lobbyUI.Show();
     }
 
     // 背景タイル生成ボタン用

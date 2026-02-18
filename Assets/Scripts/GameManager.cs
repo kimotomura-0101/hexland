@@ -61,6 +61,16 @@ public class GameManager : MonoBehaviour
         return players[currentPlayerIndex].isAI;
     }
 
+    /// <summary>
+    /// ローカルプレイヤーのターンかどうか。マルチプレイ時はリモートプレイヤーのターンをブロックする。
+    /// </summary>
+    public bool IsLocalPlayerTurn()
+    {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
+            return currentPlayerIndex == NetworkManager.Instance.LocalPlayerIndex;
+        return !IsCurrentPlayerAI();
+    }
+
     // 建設モードフラグ
     public bool isConstructionMode = false;
 
@@ -158,8 +168,11 @@ public class GameManager : MonoBehaviour
     }
 
     // メニューから呼ばれるゲーム開始処理
-    public void StartNewGame(int playerCount, int mapRadius, List<string> playerNames = null)
+    public void StartNewGame(int playerCount, int mapRadius, List<string> playerNames = null, int seed = -1)
     {
+        // マルチプレイ: シード指定でRNG初期化 → 全員同一マップ生成
+        if (seed >= 0) UnityEngine.Random.InitState(seed);
+
         // 1. プレイヤーデータの初期化
         players.Clear();
         Color[] presetColors = { Color.red, Color.blue, Color.green, Color.yellow };
@@ -709,7 +722,17 @@ public class GameManager : MonoBehaviour
     public void OnClickRollDice()
     {
         if (currentPhase != GamePhase.Playing || hasRolledDice || isDiceRolling || isGameOver) return;
-        
+
+        // マルチプレイ: サーバーにリクエスト
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
+        {
+            if (!IsLocalPlayerTurn()) return;
+            NetworkManager.Instance.SendGameAction("roll_dice");
+            isDiceRolling = true;
+            UpdateGameInfoText();
+            return;
+        }
+
         isDiceRolling = true;
         RollDice();
         UpdateGameInfoText();
@@ -718,6 +741,16 @@ public class GameManager : MonoBehaviour
     public void OnClickEndTurn()
     {
         if (currentPhase != GamePhase.Playing || currentStep == TurnStep.MoveRobber || currentStep == TurnStep.RoadBuildingCard || currentStep == TurnStep.Monopoly || isExploreMode || isGameOver) return;
+
+        // マルチプレイ: サーバーに送信（NetworkBridge経由で実行される）
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer
+            && !_isFromNetwork)
+        {
+            if (!IsLocalPlayerTurn()) return;
+            NetworkManager.Instance.SendGameAction("end_turn");
+            return;
+        }
+        _isFromNetwork = false;
 
         // 建設モードがONならOFFにする
         if (isConstructionMode) ToggleConstructionMode();
@@ -729,6 +762,9 @@ public class GameManager : MonoBehaviour
         UpdateGameInfoText();
         NotifyAI();
     }
+
+    // NetworkBridgeからの呼び出しを識別するフラグ
+    [HideInInspector] public bool _isFromNetwork = false;
 
     public void RollDice()
     {
@@ -744,6 +780,16 @@ public class GameManager : MonoBehaviour
             int d2 = Random.Range(1, 7);
             OnDiceRolled(d1, d2);
         }
+    }
+
+    /// <summary>
+    /// ネットワーク経由でダイス結果を受け取る（サーバーが出目を決定）
+    /// </summary>
+    public void OnDiceRolledNetwork(int d1, int d2)
+    {
+        isDiceRolling = false;
+        hasRolledDice = true;
+        OnDiceRolled(d1, d2);
     }
 
     // ダイスの結果が出た後に呼ばれる処理
@@ -964,6 +1010,18 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void NotifyAI()
     {
+        if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
+        {
+            // マルチプレイ: ホストのみAI操作
+            if (NetworkManager.Instance.IsHost && IsCurrentPlayerAI())
+            {
+                if (AIController.Instance != null)
+                    AIController.Instance.OnTurnChanged();
+            }
+            return;
+        }
+
+        // シングルプレイ
         if (AIController.Instance != null)
             AIController.Instance.OnTurnChanged();
     }

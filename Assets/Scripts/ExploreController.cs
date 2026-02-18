@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CapsuleCollider))]
 public class ExploreController : MonoBehaviour
 {
+    [Header("Character")]
+    public GameObject characterPrefab; // リモートプレイヤー生成用プレハブ
+
     [Header("Movement Settings")]
     public float moveSpeed = 5.0f;
     public float runMultiplier = 1.5f;
@@ -216,8 +219,21 @@ public class ExploreController : MonoBehaviour
             // AnimatorのJumpステートのSpeed Multiplierにこのパラメータを設定しておくと有効
             float currentMotionSpeed = grounded ? 1.0f : jumpAnimSpeed;
             animator.SetFloat(animMotionSpeedParam, currentMotionSpeed);
+
+            // マルチプレイ: 位置をサーバーに送信 (10Hz)
+            if (NetworkManager.Instance != null && NetworkManager.Instance.IsMultiplayer)
+            {
+                _exploreSyncTimer += Time.deltaTime;
+                if (_exploreSyncTimer >= 0.1f)
+                {
+                    _exploreSyncTimer = 0f;
+                    NetworkManager.Instance.SendExploreSync(transform.position, transform.eulerAngles.y, targetSpeed);
+                }
+            }
         }
     }
+
+    private float _exploreSyncTimer;
 
     void UpdateCameraPosition()
     {
