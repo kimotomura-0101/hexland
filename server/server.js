@@ -1,8 +1,21 @@
+const http = require('http');
 const WebSocket = require('ws');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8080;
-const wss = new WebSocket.Server({ port: PORT });
+
+// HTTP server for Render health checks
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
+  } else {
+    res.writeHead(404);
+    res.end();
+  }
+});
+
+const wss = new WebSocket.Server({ server });
 
 // ===== Data Structures =====
 const rooms = new Map();       // code -> Room
@@ -53,7 +66,9 @@ setInterval(() => {
   });
 }, 30000);
 
-console.log(`Hexland server listening on port ${PORT}`);
+server.listen(PORT, () => {
+  console.log(`Hexland server listening on port ${PORT}`);
+});
 
 // ===== Helpers =====
 function send(ws, obj) {
